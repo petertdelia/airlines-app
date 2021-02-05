@@ -1,3 +1,13 @@
+function getAirlineById(id) {
+  let airline = airlines.filter(airline => airline.id === id)[0];
+  return airline.name;
+}
+
+function getAirportByCode(code) {
+  let airport = airports.filter(airport => airport.code === code)[0];
+  return airport.name;
+}
+
 const routes = [
   {"airline":24,"src":"DFW","dest":"XNA"},
   {"airline":24,"src":"DFW","dest":"FWA"},
@@ -1395,4 +1405,4 @@ const airports = [
 
 ];
 
-export default {routes, airlines, airports};
+export default {routes, airlines, airports, getAirlineById, getAirportByCode};
