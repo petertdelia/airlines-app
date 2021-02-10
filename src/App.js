@@ -9,25 +9,10 @@ data.airports = data.addId(data.airports);
 data.airlines = data.addId(data.airlines);
 
 const App = () => {
-  /*
-  PEDAC: Filter routes by airport
-  input: data
-  output: select component displaying the correct airport list
-  rules:
-  data structures:
-  algorithm:
-
-  input: data
-  output: airport list
-  rules: only need 'name' and 'code' properties of each object in the list
-  TODOs:
-    - map data.airports, include only name and code
-    - refactor Select so that we can pass valueKey and titleKey and use them in the options list to display the correct properties in the option.
-    - use state to set both filteredAirlines and filteredAirports, not to get rid of some, but instead to add a property that tells the Select component whether the option is to be disabled or not
-
-  */
-  const [filteredAirlines, setFilteredAirlines] = useState(data.airlines);
-  const [filteredAirports, setFilteredAirports] = useState(data.airports);
+  const [airlines, setairlines] = useState(data.airlines);
+  const [airports, setairports] = useState(data.airports);
+  const [selectedAirline, setSelectedAirline] = useState("all");
+  const [selectedAirport, setSelectedAirport] = useState("all");
   const [rows, setRows] = useState(data.routes);
 
   const perPage = 25;
@@ -50,19 +35,28 @@ const App = () => {
     let airlineId = event.target.value;
     if (airlineId === "all") {
       setRows(data.routes);
+      setSelectedAirline(airlineId);
       return;
     }
     setRows(data.routes.filter(route => Number(airlineId) === route.airline));
+    setSelectedAirline(airlineId);
   }
 
   const handleFilterAirports = (event) => {
     let airportCode = event.target.value;
     if (airportCode === "all") {
       setRows(data.routes);
+      setSelectedAirport(airportCode);
       return;
     }
-    console.log(airportCode, data.routes[0].airport)
     setRows(data.routes.filter(route => airportCode === route.src || airportCode === route.dest));
+    setSelectedAirport(airportCode);
+  }
+
+  const handleClearFilters = (event) => {
+    setRows(data.routes);
+    setSelectedAirport("all");
+    setSelectedAirline("all");
   }
   
   return (
@@ -75,11 +69,11 @@ const App = () => {
         Welcome to the app!
       </p>
       <p>Show routes on
-        <Select options={filteredAirlines} valueKey="id" titleKey="name"
-        allTitle="All Airlines" value="" onSelect={handleFilterAirlines} />
+        <Select options={airlines} valueKey="id" titleKey="name"
+        allTitle="All Airlines" value={selectedAirline} onSelect={handleFilterAirlines} />
         flying in or out of 
-        <Select options={filteredAirports} valueKey="code" titleKey="name" allTitle="All Airports" onSelect={handleFilterAirports}/>
-        <button>Show all Routes</button>
+        <Select options={airports} valueKey="code" titleKey="name" allTitle="All Airports" onSelect={handleFilterAirports} value={selectedAirport}/>
+        <button onClick={handleClearFilters}>Show all Routes</button>
       </p>
       <Table className="routes-table" columns={columns} rows={rows} format={formatValue} perPage={perPage} />
     </section>
