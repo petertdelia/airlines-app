@@ -8,9 +8,11 @@ data.routes = data.addId(data.routes);
 data.airports = data.addId(data.airports);
 data.airlines = data.addId(data.airlines);
 
+// TODO: look up whether to always make a copy of my data before passing it to useState? I remember fullstackopen talking about this issue.
+
 const App = () => {
-  const [airlines, setairlines] = useState(data.airlines);
-  const [airports, setairports] = useState(data.airports);
+  const [airlines, setAirlines] = useState(data.airlines);
+  const [airports, setAirports] = useState(data.airports);
   const [selectedAirline, setSelectedAirline] = useState("all");
   const [selectedAirport, setSelectedAirport] = useState("all");
   const [rows, setRows] = useState(data.routes);
@@ -23,41 +25,96 @@ const App = () => {
     {name: 'Destination Airport', property: 'dest'},
   ];
 
-  function formatValue(property, value) {
+  const formatValue = (property, value) => {
     if (property === "airline") {
       return data.getAirlineById(value)
     } else {
       return data.getAirportByCode(value);
     }
-  }
+  };
+
+  const filterRowsByAirline = (airlineId, rows) => {
+    if (airlineId === "all") return rows;
+    return rows.filter(route => Number(airlineId) === route.airline);
+  };
+
+  const filterRowsByAirport = (airportCode, rows) => {
+    if (airportCode === "all") return rows;
+    return rows.filter(route => airportCode === route.src || airportCode === route.dest);
+  };
 
   const handleFilterAirlines = (event) => {
     let airlineId = event.target.value;
-    if (airlineId === "all") {
-      setRows(data.routes);
-      setSelectedAirline(airlineId);
-      return;
-    }
-    setRows(data.routes.filter(route => Number(airlineId) === route.airline));
+    let rows = filterRowsByAirline(
+      airlineId,
+      filterRowsByAirport(selectedAirport, data.routes)
+      );
+    setRows(rows);
     setSelectedAirline(airlineId);
-  }
+    setAirlines(getAirlinesFromRows(rows));
+    setAirports(getAirportsFromRows(rows));
+  };
 
   const handleFilterAirports = (event) => {
     let airportCode = event.target.value;
-    if (airportCode === "all") {
-      setRows(data.routes);
-      setSelectedAirport(airportCode);
-      return;
-    }
-    setRows(data.routes.filter(route => airportCode === route.src || airportCode === route.dest));
+    let rows = filterRowsByAirport(
+      airportCode, 
+      filterRowsByAirline(selectedAirline, data.routes)
+    );
+    setRows(rows);
     setSelectedAirport(airportCode);
+    setAirlines(getAirlinesFromRows(rows));
+    setAirports(getAirportsFromRows(rows));
+  };
+
+  const getAirportsFromRows = (rows) => {
+    let allAirports = data.airports;
+    let enabledAirports = rows.reduce((accum, row) => {
+      if (!accum.includes(row.src)) {
+        accum.push(row.src);
+      } if (!accum.includes(row.dest)) {
+        accum.push(row.dest);
+      }
+      return accum;
+    }, []);
+
+    let mappedAirports = allAirports.map(airport => {
+      if (enabledAirports.includes(airport.code)) {
+        return {disabled: null, ...airport};
+      } else {
+        return {disabled: true, ...airport};
+      }
+    });
+
+    return mappedAirports;
+  }
+
+  const getAirlinesFromRows = (rows) => {
+    let allAirlines = data.airlines;
+
+    let enabledAirlines = rows.reduce((accum, row) => {
+      if (accum.includes(row.airline)) return accum; 
+      return [row.airline, ...accum];
+    }, []);
+
+    let mappedAirlines = allAirlines.map(airline => {
+      if (enabledAirlines.includes(airline.id)) {
+        return {disabled: null, ...airline};
+      } else {
+        return {disabled: true, ...airline};
+      }
+    });
+
+    return mappedAirlines;
   }
 
   const handleClearFilters = (event) => {
     setRows(data.routes);
     setSelectedAirport("all");
     setSelectedAirline("all");
-  }
+    setAirlines(data.airlines);
+    setAirports(data.airports);
+  };
   
   return (
     <div className="app">
