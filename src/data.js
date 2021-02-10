@@ -1,3 +1,5 @@
+import generateId from "./utils/generateId";
+
 function getAirlineById(id) {
   let airline = airlines.filter(airline => airline.id === id)[0];
   return airline.name;
@@ -6,6 +8,10 @@ function getAirlineById(id) {
 function getAirportByCode(code) {
   let airport = airports.filter(airport => airport.code === code)[0];
   return airport.name;
+}
+
+function addId(args) {
+  return args.map(arg => ({key: generateId(), ...arg}));
 }
 
 const routes = [
@@ -1405,4 +1411,5 @@ const airports = [
 
 ];
 
-export default {routes, airlines, airports, getAirlineById, getAirportByCode};
+
+export default {routes, airlines, airports, getAirlineById, getAirportByCode, addId};
