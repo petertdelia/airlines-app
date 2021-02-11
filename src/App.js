@@ -1,4 +1,4 @@
-import React, { useState, Component } from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import data from './data';
 import Table from './components/Table';
@@ -9,12 +9,14 @@ data.airports = data.addId(data.airports);
 data.airlines = data.addId(data.airlines);
 
 // TODO: look up whether to always make a copy of my data before passing it to useState? I remember fullstackopen talking about this issue.
+// TODO: The pagination doesn't reset when I filter and the result has fewer pages. Probably need to have a ref to that piece of state within the Table and reset it each time a filter is selected
 
 const App = () => {
   const [airlines, setAirlines] = useState(data.airlines);
   const [airports, setAirports] = useState(data.airports);
   const [selectedAirline, setSelectedAirline] = useState("all");
   const [selectedAirport, setSelectedAirport] = useState("all");
+  const [rowCount, setRowCount] = useState(0);
   const [rows, setRows] = useState(data.routes);
 
   const perPage = 25;
@@ -48,11 +50,12 @@ const App = () => {
     let rows = filterRowsByAirline(
       airlineId,
       filterRowsByAirport(selectedAirport, data.routes)
-      );
+    );
     setRows(rows);
     setSelectedAirline(airlineId);
     setAirlines(getAirlinesFromRows(rows));
     setAirports(getAirportsFromRows(rows));
+    setRowCount(0);
   };
 
   const handleFilterAirports = (event) => {
@@ -65,6 +68,7 @@ const App = () => {
     setSelectedAirport(airportCode);
     setAirlines(getAirlinesFromRows(rows));
     setAirports(getAirportsFromRows(rows));
+    setRowCount(0);
   };
 
   const getAirportsFromRows = (rows) => {
@@ -79,11 +83,9 @@ const App = () => {
     }, []);
 
     let mappedAirports = allAirports.map(airport => {
-      if (enabledAirports.includes(airport.code)) {
-        return {disabled: null, ...airport};
-      } else {
-        return {disabled: true, ...airport};
-      }
+      return enabledAirports.includes(airport.code)
+        ? {disabled: null, ...airport}
+        : {disabled: true, ...airport};
     });
 
     return mappedAirports;
@@ -93,8 +95,9 @@ const App = () => {
     let allAirlines = data.airlines;
 
     let enabledAirlines = rows.reduce((accum, row) => {
-      if (accum.includes(row.airline)) return accum; 
-      return [row.airline, ...accum];
+      return accum.includes(row.airline)
+        ? accum
+        : [row.airline, ...accum];
     }, []);
 
     let mappedAirlines = allAirlines.map(airline => {
@@ -114,6 +117,7 @@ const App = () => {
     setSelectedAirline("all");
     setAirlines(data.airlines);
     setAirports(data.airports);
+    setRowCount(0);
   };
   
   return (
@@ -132,7 +136,7 @@ const App = () => {
         <Select options={airports} valueKey="code" titleKey="name" allTitle="All Airports" onSelect={handleFilterAirports} value={selectedAirport}/>
         <button onClick={handleClearFilters}>Show all Routes</button>
       </p>
-      <Table className="routes-table" columns={columns} rows={rows} format={formatValue} perPage={perPage} />
+      <Table className="routes-table" columns={columns} rows={rows} format={formatValue} perPage={perPage} rowCount={rowCount} setRowCount={setRowCount}/>
     </section>
   </div>
   );
